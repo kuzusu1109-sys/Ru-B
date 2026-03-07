@@ -167,14 +167,14 @@ async function main() {
   }
   console.log('');
 
-  const token = process.env.DISCORD_TOKEN;
+  const token =
+  process.env.DISCORD_TOKEN ||
+  "MTQxxxxx你的token";
 
-　console.log("ENV CHECK:", !!process.env.DISCORD_TOKEN);
-  
-  if (!token) {
-    console.error('[ERROR] No DISCORD_TOKEN. Check config.txt');
-    process.exit(1);
-  }
+if (!token) {
+  console.error("[ERROR] No DISCORD_TOKEN.");
+  process.exit(1);
+}
 
   client.once('ready', () => {
     console.log('  Bot ONLINE: ' + client.user.tag);
