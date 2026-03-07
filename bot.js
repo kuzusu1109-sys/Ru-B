@@ -167,13 +167,9 @@ async function main() {
   }
   console.log('');
 
-  const token = process.env.DISCORD_TOKEN;
-console.log("ENV CHECK:", !!token);
-
-if (!token) {
-  console.error("[ERROR] DISCORD_TOKEN environment variable not set.");
-  process.exit(1);
-}
+  console.log("ENV DISCORD:", JSON.stringify(process.env.DISCORD_TOKEN ?? null));
+console.log("ENV TEST:", JSON.stringify(process.env.TEST_VALUE ?? null));
+process.exit(0);
 
   client.once('ready', () => {
     console.log('  Bot ONLINE: ' + client.user.tag);
