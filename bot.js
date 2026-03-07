@@ -1,9 +1,15 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const { DynamicLoader, Version } = require('bcdice');
 
+// ============================
+// Settings
+// ============================
 const PREFIX = '!';
 const DEFAULT_SYSTEM = 'SwordWorld2.5';
 
+// ============================
+// BCDice
+// ============================
 const loader = new DynamicLoader();
 const channelSystems = new Map();
 const loadedSystems = new Map();
@@ -25,6 +31,9 @@ async function rollDice(systemId, command) {
   }
 }
 
+// ============================
+// Discord
+// ============================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -35,9 +44,9 @@ const client = new Client({
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
-
   const content = message.content.trim();
 
+  // --- Commands ---
   if (content.startsWith(PREFIX)) {
     const args = content.slice(PREFIX.length).trim().split(/\s+/);
     const cmd = (args.shift() || '').toLowerCase();
@@ -48,32 +57,29 @@ client.on('messageCreate', async (message) => {
         .setTitle('🎲 TRPG Dice Bot')
         .setColor(0x5865f2)
         .addFields(
-          { name: '骰子', value: '`2d6+3` `3d6>=10` `K20@13` `K30@10+5`' },
-          { name: '系統', value: '`!set <ID>` `!system` `!search <word>` `!syshelp` `!list`' },
-          { name: '其他', value: '`!help` `!version`' },
-          { name: '目前系統', value: '`' + sys + '`' }
+          { name: '📌 Dice', value: '`2d6+3`  `3d6>=10`  `K20@13`  `x3 2D6`  `x3 K20@13`' },
+          { name: '⚙️ System', value: '`!set <ID>` - Set game system\n`!system` - Current system\n`!search <word>` - Search\n`!syshelp` - System commands\n`!list` - All systems' },
+          { name: '📋 Other', value: '`!help` `!version`' },
+          { name: '💡 Current', value: '`' + sys + '`' }
         )
-        .setFooter({ text: `BCDice ${Version} | ${loader.listAvailableGameSystems().length} systems` });
+        .setFooter({ text: 'BCDice ' + Version + ' | ' + loader.listAvailableGameSystems().length + ' systems' });
 
-      await message.channel.send({ embeds: [embed] });
-      return;
+      return message.channel.send({ embeds: [embed] });
     }
 
     if (cmd === 'set') {
-      if (!args.length) {
-        await message.channel.send('❌ Usage: `!set SwordWorld2.5`');
-        return;
-      }
+      if (!args.length) return message.channel.send('❌ Usage: `!set SwordWorld2.5`');
 
       const input = args[0];
 
+      // Exact match
       try {
         const GS = await getGameSystem(input);
         channelSystems.set(message.channelId, input);
-        await message.channel.send(`✅ Set to **${GS.NAME}** (\`${input}\`)`);
-        return;
+        return message.channel.send('✅ Set to **' + GS.NAME + '** (`' + input + '`)');
       } catch {}
 
+      // Fuzzy match
       const match = loader.listAvailableGameSystems().find(
         s => s.id.toLowerCase() === input.toLowerCase()
       );
@@ -82,68 +88,58 @@ client.on('messageCreate', async (message) => {
         try {
           const GS = await getGameSystem(match.id);
           channelSystems.set(message.channelId, match.id);
-          await message.channel.send(`✅ Set to **${GS.NAME}** (\`${match.id}\`)`);
-          return;
+          return message.channel.send('✅ Set to **' + GS.NAME + '** (`' + match.id + '`)');
         } catch {}
       }
 
-      await message.channel.send(`❌ \`${input}\` not found. Try \`!search\``);
-      return;
+      return message.channel.send('❌ `' + input + '` not found. Try `!search`');
     }
 
     if (cmd === 'system') {
       const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
-      await message.channel.send(`🎲 Current: **${sys}**`);
-      return;
+      return message.channel.send('🎲 Current: **' + sys + '**');
     }
 
     if (cmd === 'search') {
-      if (!args.length) {
-        await message.channel.send('❌ Usage: `!search sword`');
-        return;
-      }
+      if (!args.length) return message.channel.send('❌ Usage: `!search sword`');
 
       const kw = args.join(' ').toLowerCase();
       const results = loader.listAvailableGameSystems().filter(
         s => s.id.toLowerCase().includes(kw) || s.name.toLowerCase().includes(kw)
       );
 
-      if (!results.length) {
-        await message.channel.send(`🔍 No results for "${kw}".`);
-        return;
-      }
+      if (!results.length) return message.channel.send('🔍 No results for "' + kw + '".');
 
-      const text = results.slice(0, 20).map(
-        s => `• **${s.name}** → \`${s.id}\``
-      ).join('\n');
+      const text = results
+        .slice(0, 20)
+        .map(s => '• **' + s.name + '** → `' + s.id + '`')
+        .join('\n');
 
-      const more = results.length > 20 ? `\n...+${results.length - 20} more` : '';
+      const more = results.length > 20 ? '\n...+' + (results.length - 20) + ' more' : '';
 
-      await message.channel.send({
+      return message.channel.send({
         embeds: [
           new EmbedBuilder()
-            .setTitle(`🔍 ${kw}`)
+            .setTitle('🔍 ' + kw)
             .setColor(0x57f287)
             .setDescription(text + more)
         ]
       });
-      return;
     }
 
     if (cmd === 'list') {
       const all = loader.listAvailableGameSystems();
-      const text = all.slice(0, 40).map(s => `\`${s.id}\``).join(', ');
-      const more = all.length > 40 ? `\n...+${all.length - 40} more (use \`!search\`)` : '';
+      const text = all.slice(0, 40).map(s => '`' + s.id + '`').join(', ');
+      const more = all.length > 40 ? '\n...+' + (all.length - 40) + ' more (use `!search`)' : '';
 
-      await message.channel.send({
+      return message.channel.send({
         embeds: [
           new EmbedBuilder()
-            .setTitle(`📋 All Systems (${all.length})`)
+            .setTitle('📋 All Systems (' + all.length + ')')
             .setColor(0x5865f2)
             .setDescription(text + more)
         ]
       });
-      return;
     }
 
     if (cmd === 'syshelp') {
@@ -153,23 +149,30 @@ client.on('messageCreate', async (message) => {
         const GS = await getGameSystem(sys);
         const help = GS.HELP_MESSAGE || 'No help available.';
         for (const chunk of help.match(/[\s\S]{1,1900}/g) || ['N/A']) {
-          await message.channel.send(`📖 **${GS.NAME}**:\n\`\`\`\n${chunk}\n\`\`\``);
+          await message.channel.send('📖 **' + GS.NAME + '**:\n```\n' + chunk + '\n```');
         }
       } catch {
-        await message.channel.send('❌ Could not load help.');
+        return message.channel.send('❌ Could not load help.');
       }
       return;
     }
 
     if (cmd === 'version') {
-      await message.channel.send(
-        `🎲 BCDice **${Version}** | Systems: **${loader.listAvailableGameSystems().length}**`
+      return message.channel.send(
+        '🎲 BCDice **' + Version + '** | Systems: **' + loader.listAvailableGameSystems().length + '**'
       );
-      return;
     }
   }
 
-  if (/^(k\d+(@\d+)?([+-]\d+)?|\d+d\d+|cc|cb|cbr|res|fal|sr|ar|ht|et|ft|st|at|pot|mp|dbt|crt)/i.test(content)) {
+  // --- Auto dice detection ---
+  // 支援:
+  // 2d6
+  // 1d100
+  // K20@13
+  // x3 2D6
+  // rep3 2D6
+  // repeat3 K20@13
+  if (/^(x\d+\s+.+|rep\d+\s+.+|repeat\d+\s+.+|k\d+(@\d+)?([+-]\d+)?|\d+d\d+|cc|cb|cbr|res|fal|sr|ar|ht|et|ft|st|at|pot|mp|dbt|crt)/i.test(content)) {
     const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
     const result = await rollDice(sys, content);
 
@@ -177,18 +180,21 @@ client.on('messageCreate', async (message) => {
       const embed = new EmbedBuilder()
         .setColor(0xfee75c)
         .setAuthor({
-          name: message.member?.displayName || message.author.username,
+          name: message.member?.displayName || message.author.displayName || message.author.username,
           iconURL: message.author.displayAvatarURL()
         })
-        .setDescription(`🎲 ${result.text}`)
+        .setDescription('🎲 ' + result.text)
         .setFooter({ text: sys })
         .setTimestamp();
 
-      await message.channel.send({ embeds: [embed] });
+      return message.channel.send({ embeds: [embed] });
     }
   }
 });
 
+// ============================
+// Startup
+// ============================
 async function main() {
   console.log('========================================');
   console.log('  TRPG Dice Discord Bot');
@@ -212,15 +218,22 @@ async function main() {
     process.exit(1);
   }
 
-  client.once('ready', () => {
+  client.once('clientReady', () => {
     console.log('  Bot ONLINE: ' + client.user.tag);
     console.log('  Servers: ' + client.guilds.cache.size);
-    client.user.setActivity('!help | SW2.5');
+    console.log('  Running... Ctrl+C to stop.');
+    console.log('');
+    client.user.setActivity('!help | SW2.5', { type: 0 });
   });
 
   client.on('error', (e) => console.error('Discord error:', e));
 
-  await client.login(token.trim());
+  try {
+    await client.login(token.trim());
+  } catch (error) {
+    console.error('[ERROR] Login failed: ' + error.message);
+    process.exit(1);
+  }
 }
 
 process.on('unhandledRejection', (e) => console.error('Unhandled:', e));
