@@ -168,10 +168,10 @@ async function main() {
   console.log('');
 
   const token = process.env.DISCORD_TOKEN;
-console.log("HAS_TOKEN:", !!token);
+console.log("ENV CHECK:", !!token);
 
 if (!token) {
-  console.error("[ERROR] No DISCORD_TOKEN.");
+  console.error("[ERROR] DISCORD_TOKEN environment variable not set.");
   process.exit(1);
 }
 
