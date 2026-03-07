@@ -168,6 +168,9 @@ async function main() {
   console.log('');
 
   const token = process.env.DISCORD_TOKEN;
+
+　console.log("ENV:", process.env.DISCORD_TOKEN);
+  
   if (!token) {
     console.error('[ERROR] No DISCORD_TOKEN. Check config.txt');
     process.exit(1);
