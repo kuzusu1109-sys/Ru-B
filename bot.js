@@ -169,7 +169,7 @@ async function main() {
 
   const token =
   process.env.DISCORD_TOKEN ||
-  "MTQxxxxx你的token";
+  "MTQ3OTkyMTcwODMxMDg1NTkwMQ.GC1UYi.8KwS5qDVNK67_G9rSYM2zRG79p9RmUlCknmRVY";
 
 if (!token) {
   console.error("[ERROR] No DISCORD_TOKEN.");
