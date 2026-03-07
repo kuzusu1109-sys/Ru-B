@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Discord TRPG 骰子 Bot",
   "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
   "dependencies": {
     "bcdice": "^4.9.0",
     "discord.js": "^14.0.0"
