@@ -167,9 +167,8 @@ async function main() {
   }
   console.log('');
 
-  const token =
-  process.env.DISCORD_TOKEN ||
-  "MTQ3OTkyMTcwODMxMDg1NTkwMQ.GC1UYi.8KwS5qDVNK67_G9rSYM2zRG79p9RmUlCknmRVY";
+  const token = process.env.DISCORD_TOKEN;
+console.log("HAS_TOKEN:", !!token);
 
 if (!token) {
   console.error("[ERROR] No DISCORD_TOKEN.");
