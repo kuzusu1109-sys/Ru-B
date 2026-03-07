@@ -1,10 +1,13 @@
 {
-  "name": "trpg-dice-bot",
+  "name": "sw25-discord-dice-bot",
   "version": "1.0.0",
-  "description": "Discord TRPG 骰子 Bot",
+  "description": "Discord TRPG Dice Bot for SW2.5",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "bcdice": "^4.9.0",
