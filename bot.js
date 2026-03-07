@@ -223,7 +223,7 @@ async function main() {
     console.log('  Servers: ' + client.guilds.cache.size);
     console.log('  Running... Ctrl+C to stop.');
     console.log('');
-    client.user.setActivity('!help | SW2.5', { type: 0 });
+    client.user.setActivity('哼，叫救護車來都沒用！', { type: 0 });
   });
 
   client.on('error', (e) => console.error('Discord error:', e));
