@@ -1,15 +1,9 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const { DynamicLoader, Version } = require('bcdice');
 
-// ============================
-// Settings
-// ============================
 const PREFIX = '!';
 const DEFAULT_SYSTEM = 'SwordWorld2.5';
 
-// ============================
-// BCDice
-// ============================
 const loader = new DynamicLoader();
 const channelSystems = new Map();
 const loadedSystems = new Map();
@@ -31,9 +25,6 @@ async function rollDice(systemId, command) {
   }
 }
 
-// ============================
-// Discord
-// ============================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -44,12 +35,12 @@ const client = new Client({
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
+
   const content = message.content.trim();
 
-  // --- Commands ---
   if (content.startsWith(PREFIX)) {
     const args = content.slice(PREFIX.length).trim().split(/\s+/);
-    const cmd = args.shift().toLowerCase();
+    const cmd = (args.shift() || '').toLowerCase();
 
     if (cmd === 'help') {
       const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
@@ -57,100 +48,147 @@ client.on('messageCreate', async (message) => {
         .setTitle('🎲 TRPG Dice Bot')
         .setColor(0x5865f2)
         .addFields(
-          { name: '📌 Dice', value: '`1d100`  `2d6+3`  `3d6>=10`\nDirectly type to roll!' },
-          { name: '⚙️ System', value: '`!set <ID>` - Set game system\n`!system` - Current system\n`!search <word>` - Search\n`!syshelp` - System commands\n`!list` - All systems' },
-          { name: '📋 Other', value: '`!help` `!version`' },
-          { name: '💡 Current', value: '`' + sys + '`' }
+          { name: '骰子', value: '`2d6+3` `3d6>=10` `K20@13` `K30@10+5`' },
+          { name: '系統', value: '`!set <ID>` `!system` `!search <word>` `!syshelp` `!list`' },
+          { name: '其他', value: '`!help` `!version`' },
+          { name: '目前系統', value: '`' + sys + '`' }
         )
-        .setFooter({ text: 'BCDice ' + Version + ' | ' + loader.listAvailableGameSystems().length + ' systems' });
-      return message.channel.send({ embeds: [embed] });
+        .setFooter({ text: `BCDice ${Version} | ${loader.listAvailableGameSystems().length} systems` });
+
+      await message.channel.send({ embeds: [embed] });
+      return;
     }
 
     if (cmd === 'set') {
-      if (!args.length) return message.channel.send('❌ Usage: `!set Cthulhu7th`');
+      if (!args.length) {
+        await message.channel.send('❌ Usage: `!set SwordWorld2.5`');
+        return;
+      }
+
       const input = args[0];
-      // Exact match
+
       try {
         const GS = await getGameSystem(input);
         channelSystems.set(message.channelId, input);
-        return message.channel.send('✅ Set to **' + GS.NAME + '** (`' + input + '`)');
+        await message.channel.send(`✅ Set to **${GS.NAME}** (\`${input}\`)`);
+        return;
       } catch {}
-      // Fuzzy match
-      const match = loader.listAvailableGameSystems().find(s => s.id.toLowerCase() === input.toLowerCase());
+
+      const match = loader.listAvailableGameSystems().find(
+        s => s.id.toLowerCase() === input.toLowerCase()
+      );
+
       if (match) {
         try {
           const GS = await getGameSystem(match.id);
           channelSystems.set(message.channelId, match.id);
-          return message.channel.send('✅ Set to **' + GS.NAME + '** (`' + match.id + '`)');
+          await message.channel.send(`✅ Set to **${GS.NAME}** (\`${match.id}\`)`);
+          return;
         } catch {}
       }
-      return message.channel.send('❌ `' + input + '` not found. Try `!search`');
+
+      await message.channel.send(`❌ \`${input}\` not found. Try \`!search\``);
+      return;
     }
 
     if (cmd === 'system') {
       const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
-      return message.channel.send('🎲 Current: **' + sys + '**');
+      await message.channel.send(`🎲 Current: **${sys}**`);
+      return;
     }
 
     if (cmd === 'search') {
-      if (!args.length) return message.channel.send('❌ Usage: `!search cthulhu`');
+      if (!args.length) {
+        await message.channel.send('❌ Usage: `!search sword`');
+        return;
+      }
+
       const kw = args.join(' ').toLowerCase();
-      const results = loader.listAvailableGameSystems().filter(s =>
-        s.id.toLowerCase().includes(kw) || s.name.toLowerCase().includes(kw)
+      const results = loader.listAvailableGameSystems().filter(
+        s => s.id.toLowerCase().includes(kw) || s.name.toLowerCase().includes(kw)
       );
-      if (!results.length) return message.channel.send('🔍 No results for "' + kw + '".');
-      const text = results.slice(0, 20).map(s => '• **' + s.name + '** → `' + s.id + '`').join('\n');
-      const more = results.length > 20 ? '\n...+' + (results.length - 20) + ' more' : '';
-      return message.channel.send({ embeds: [
-        new EmbedBuilder().setTitle('🔍 ' + kw).setColor(0x57f287).setDescription(text + more)
-      ]});
+
+      if (!results.length) {
+        await message.channel.send(`🔍 No results for "${kw}".`);
+        return;
+      }
+
+      const text = results.slice(0, 20).map(
+        s => `• **${s.name}** → \`${s.id}\``
+      ).join('\n');
+
+      const more = results.length > 20 ? `\n...+${results.length - 20} more` : '';
+
+      await message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(`🔍 ${kw}`)
+            .setColor(0x57f287)
+            .setDescription(text + more)
+        ]
+      });
+      return;
     }
 
     if (cmd === 'list') {
       const all = loader.listAvailableGameSystems();
-      const text = all.slice(0, 40).map(s => '`' + s.id + '`').join(', ');
-      const more = all.length > 40 ? '\n...+' + (all.length - 40) + ' more (use `!search`)' : '';
-      return message.channel.send({ embeds: [
-        new EmbedBuilder().setTitle('📋 All Systems (' + all.length + ')').setColor(0x5865f2).setDescription(text + more)
-      ]});
+      const text = all.slice(0, 40).map(s => `\`${s.id}\``).join(', ');
+      const more = all.length > 40 ? `\n...+${all.length - 40} more (use \`!search\`)` : '';
+
+      await message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(`📋 All Systems (${all.length})`)
+            .setColor(0x5865f2)
+            .setDescription(text + more)
+        ]
+      });
+      return;
     }
 
     if (cmd === 'syshelp') {
       const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
+
       try {
         const GS = await getGameSystem(sys);
         const help = GS.HELP_MESSAGE || 'No help available.';
         for (const chunk of help.match(/[\s\S]{1,1900}/g) || ['N/A']) {
-          await message.channel.send('📖 **' + GS.NAME + '**:\n```\n' + chunk + '\n```');
+          await message.channel.send(`📖 **${GS.NAME}**:\n\`\`\`\n${chunk}\n\`\`\``);
         }
-      } catch { return message.channel.send('❌ Could not load help.'); }
+      } catch {
+        await message.channel.send('❌ Could not load help.');
+      }
       return;
     }
 
     if (cmd === 'version') {
-      return message.channel.send('🎲 BCDice **' + Version + '** | Systems: **' + loader.listAvailableGameSystems().length + '**');
+      await message.channel.send(
+        `🎲 BCDice **${Version}** | Systems: **${loader.listAvailableGameSystems().length}**`
+      );
+      return;
     }
   }
 
-  // --- Auto dice detection ---
   if (/^(k\d+(@\d+)?([+-]\d+)?|\d+d\d+|cc|cb|cbr|res|fal|sr|ar|ht|et|ft|st|at|pot|mp|dbt|crt)/i.test(content)) {
     const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
     const result = await rollDice(sys, content);
+
     if (result && result.text) {
       const embed = new EmbedBuilder()
         .setColor(0xfee75c)
-        .setAuthor({ name: message.author.displayName, iconURL: message.author.displayAvatarURL() })
-        .setDescription('🎲 ' + result.text)
+        .setAuthor({
+          name: message.member?.displayName || message.author.username,
+          iconURL: message.author.displayAvatarURL()
+        })
+        .setDescription(`🎲 ${result.text}`)
         .setFooter({ text: sys })
         .setTimestamp();
-      return message.channel.send({ embeds: [embed] });
+
+      await message.channel.send({ embeds: [embed] });
     }
   }
 });
 
-// ============================
-// Startup
-// ============================
 async function main() {
   console.log('========================================');
   console.log('  TRPG Dice Discord Bot');
@@ -159,36 +197,30 @@ async function main() {
   console.log('  Systems: ' + loader.listAvailableGameSystems().length);
   console.log('========================================');
 
-  const test = await rollDice('DiceBot', '1d100');
+  const test = await rollDice(DEFAULT_SYSTEM, '2d6');
   if (test && test.text) {
-    console.log('  Test 1d100: ' + test.text);
+    console.log('  Test 2d6: ' + test.text);
   } else {
     console.log('  [WARN] Test roll failed');
   }
-  console.log('');
 
-  console.log("ENV DISCORD:", JSON.stringify(process.env.DISCORD_TOKEN ?? null));
-console.log("ENV TEST:", JSON.stringify(process.env.TEST_VALUE ?? null));
-process.exit(0);
+  const token = process.env.DISCORD_TOKEN;
+  console.log('ENV CHECK:', !!token);
+
+  if (!token) {
+    console.error('[ERROR] DISCORD_TOKEN environment variable not set.');
+    process.exit(1);
+  }
 
   client.once('ready', () => {
     console.log('  Bot ONLINE: ' + client.user.tag);
     console.log('  Servers: ' + client.guilds.cache.size);
-    console.log('  Running... Ctrl+C to stop.');
-    console.log('');
-    client.user.setActivity('!help | BCDice ' + Version, { type: 0 });
+    client.user.setActivity('!help | SW2.5');
   });
 
   client.on('error', (e) => console.error('Discord error:', e));
 
-  try {
-    await client.login(token.trim());
-  } catch (error) {
-    console.error('[ERROR] Login failed: ' + error.message);
-    console.error('  -> ResetToken.bat to fix token');
-    console.error('  -> Enable MESSAGE CONTENT INTENT');
-    process.exit(1);
-  }
+  await client.login(token.trim());
 }
 
 process.on('unhandledRejection', (e) => console.error('Unhandled:', e));
