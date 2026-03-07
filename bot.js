@@ -169,7 +169,7 @@ async function main() {
 
   const token = process.env.DISCORD_TOKEN;
 
-　console.log("ENV:", process.env.DISCORD_TOKEN);
+　console.log("ENV CHECK:", !!process.env.DISCORD_TOKEN);
   
   if (!token) {
     console.error('[ERROR] No DISCORD_TOKEN. Check config.txt');
