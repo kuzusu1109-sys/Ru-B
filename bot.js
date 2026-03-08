@@ -172,7 +172,7 @@ client.on('messageCreate', async (message) => {
   // x3 2D6
   // rep3 2D6
   // repeat3 K20@13
-  if (/^(x\d+\s+.+|rep\d+\s+.+|repeat\d+\s+.+|k\d+(@\d+)?([+-]\d+)?|\d+d\d+|cc|cb|cbr|res|fal|sr|ar|ht|et|ft|st|at|pot|mp|dbt|crt)/i.test(content)) {
+  if (/^(x\d+\s+.+|rep\d+\s+.+|repeat\d+\s+.+|k\d+(@\d+)?([+-]\d+)?|\d+d\d+|abt|tt|cc|cb|cbr|res|fal|sr|ar|ht|et|ft|st|at|pot|mp|dbt|crt)/i.test(content)) {
     const sys = channelSystems.get(message.channelId) || DEFAULT_SYSTEM;
     const result = await rollDice(sys, content);
 
